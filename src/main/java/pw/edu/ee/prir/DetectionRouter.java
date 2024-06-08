@@ -22,7 +22,7 @@ public class DetectionRouter {
             .route(
                 POST("%s/upload".formatted(DETECTION_PATH))
                     .and(accept(MediaType.MULTIPART_FORM_DATA)),
-                detectionHandler::uploadFile
+                detectionHandler::doDetection
             );
     }
 
