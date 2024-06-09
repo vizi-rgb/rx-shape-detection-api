@@ -19,8 +19,7 @@ public class DetectionHandler {
             .map(parts -> parts.toSingleValueMap().get("file"))
             .cast(FilePart.class)
             .flatMapMany(FilePart::content)
-            .transform(shapeDetectorUseCase::detect)
-            .flatMap(Mono::just);
+            .transform(shapeDetectorUseCase::detect);
 
         return ServerResponse.ok().contentType(MediaType.IMAGE_JPEG).body(BodyInserters.fromDataBuffers(image));
     }
