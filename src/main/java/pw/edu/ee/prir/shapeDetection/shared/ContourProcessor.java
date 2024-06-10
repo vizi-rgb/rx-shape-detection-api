@@ -8,8 +8,12 @@ import java.util.List;
 
 public class ContourProcessor {
     public static List<MatOfPoint> extractContoursFromImage(Mat image) {
+        if (image.empty()) {
+            throw new IllegalArgumentException("Image cannot be empty");
+        }
+
         final var grayImage = new Mat();
-        Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_RGB2GRAY);
 
         final var blurredImage = new Mat();
         Imgproc.GaussianBlur(grayImage, blurredImage, new Size(5, 5), 0);

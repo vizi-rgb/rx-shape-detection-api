@@ -1,8 +1,8 @@
 package pw.edu.ee.prir;
 
 import org.springframework.core.io.buffer.DataBuffer;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface ShapeDetectorUseCase {
-    Flux<DataBuffer> detect(Flux<DataBuffer> image);
+    Mono<DataBuffer> detect(Mono<DataBuffer> image);
 }

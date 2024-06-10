@@ -17,8 +17,9 @@ import pw.edu.ee.prir.shapeDetection.shared.ShapeOperations;
 import pw.edu.ee.prir.shapeDetection.shared.ShapePosition;
 import pw.edu.ee.prir.shapeDetection.triangle.TriangleDrawer;
 import pw.edu.ee.prir.shapeDetection.triangle.TriangleRecognizer;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,18 +34,31 @@ public class ShapeDetectorService implements ShapeDetectorUseCase {
 
     @SneakyThrows
     @Override
-    public Flux<DataBuffer> detect(Flux<DataBuffer> image) {
-        return image.take(1)
+    public Mono<DataBuffer> detect(Mono<DataBuffer> image) {
+        return image
             .map(this::convertToMat)
             .map(this::recognizeShapes)
             .flatMap(this::convertMatToDataBuffer);
     }
 
     private Mat convertToMat(DataBuffer image) {
+        if (image == null) {
+            throw new IllegalArgumentException("DataBuffer is null");
+        }
+
         try (final var data = image.asInputStream()) {
-            return Imgcodecs.imdecode(new MatOfByte(data.readAllBytes()), Imgcodecs.IMREAD_COLOR);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to read image", e);
+            byte[] imageData = data.readAllBytes();
+            if (imageData.length == 0) {
+                throw new IllegalArgumentException("Empty image data");
+            }
+
+            Mat mat = Imgcodecs.imdecode(new MatOfByte(imageData), Imgcodecs.IMREAD_COLOR);
+            if (mat.empty()) {
+                throw new IllegalArgumentException("Failed to decode image");
+            }
+            return mat;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -76,11 +90,11 @@ public class ShapeDetectorService implements ShapeDetectorUseCase {
         return outputImage;
     }
 
-    private Flux<DataBuffer> convertMatToDataBuffer(Mat mat) {
+    private Mono<DataBuffer> convertMatToDataBuffer(Mat mat) {
         MatOfByte mob = new MatOfByte();
         Imgcodecs.imencode(".jpg", mat, mob);
         byte[] byteArray = mob.toArray();
         DataBuffer buffer = DefaultDataBufferFactory.sharedInstance.wrap(byteArray);
-        return Flux.just(buffer);
+        return Mono.just(buffer);
     }
 }
